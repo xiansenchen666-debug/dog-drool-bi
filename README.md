@@ -1,6 +1,6 @@
 # 尾巴日记 · 宠物口水巾试戴
 
-顾客上传宠物照片、选择款式，浏览器先用免费开源的本地抠图组件分离宠物，再用 Three.js 渲染弯曲的 3D 口水巾，与照片实时合成，并下载 PNG。抠图在浏览器中运行，客户照片不会上传到 Deno 后端，也不需要图片生成 API。默认位置适合面部与脖颈居中的照片，其他照片可单击脖颈位置校准、使用滑杆调整尺寸和左右视角，无需拖动口水巾。效果仅供参考。
+顾客上传宠物照片、选择款式，浏览器先用免费开源的本地抠图组件分离宠物，再用 Three.js 生成即时预览。点击“生成自然试戴效果”后，Deno 后端会把宠物照片、可选的本地抠图和口水巾素材转发给图像编辑 API，返回最终试戴图。默认位置适合面部与脖颈居中的照片，其他照片可单击脖颈位置校准、使用滑杆调整尺寸和左右视角，无需拖动口水巾。效果仅供参考。
 
 ## 本地运行
 
@@ -14,7 +14,7 @@ deno task dev
 
 ## GitHub 与 Deno Deploy
 
-仓库中的 `auto_push.bat` 会提交并推送到 GitHub。Deno Deploy 中将此仓库创建为 **Dynamic App**，入口文件为 `main.ts`，不需要构建命令、API 密钥或图片生成模型。GitHub 集成关联 `main` 分支后，后续推送会触发自动部署。
+仓库中的 `auto_push.bat` 会提交并推送到 GitHub。Deno Deploy 中将此仓库创建为 **Dynamic App**，入口文件为 `main.ts`。在项目的 Environment Variables / Secrets 中设置 `IMAGE_API_KEY`，可选设置 `IMAGE_API_BASE_URL`（默认 `https://meapi.space/v1`）和 `IMAGE_MODEL`（默认 `gpt-image-2.5-flare`）。GitHub 集成关联 `main` 分支后，后续推送会触发自动部署。
 
 ## 换成真实商品
 

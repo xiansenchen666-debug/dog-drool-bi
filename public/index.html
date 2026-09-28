@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f8f8f4">
-<meta name="description" content="上传宠物照片，用免费开源工具抠出宠物后选择口水巾款式，快速生成试戴效果图。">
+<meta name="description" content="上传宠物照片，用免费开源工具抠出宠物后选择口水巾款式，生成自然的宠物试戴效果图。">
   <title>尾巴日记 · 宠物口水巾试戴</title>
-  <link rel="stylesheet" href="/style.css?v=local-cutout3">
-  <script src="/app.js?v=local-cutout3" type="module"></script>
+  <link rel="stylesheet" href="/style.css?v=try-on-api1">
+  <script src="/app.js?v=try-on-api1" type="module"></script>
 </head>
 <body>
   <header class="site-header">
@@ -40,6 +40,7 @@
         <div class="preview" id="preview">
           <img id="preview-image" src="/assets/sample-dog.jpg" alt="示例宠物照片">
           <img id="pet-cutout" alt="" hidden>
+          <img id="generated-image" alt="生成的宠物口水巾试戴效果" hidden>
           <canvas id="render-canvas" aria-label="3D 口水巾渲染"></canvas>
           <div class="image-badge"><span aria-hidden="true">✳</span> 宠物试戴预览</div>
           <div class="loading-layer" id="processing" hidden>
@@ -85,10 +86,10 @@
             <button type="button" data-view="right">右侧</button>
           </div>
           <div class="size-field"><label for="size-range">口水巾大小 <output id="size-value" for="size-range">100%</output></label><input id="size-range" type="range" min="60" max="150" step="5" value="100"></div>
-          <p class="helper disclosure">免费开源抠图在浏览器中完成，照片不会上传到你的服务器。</p>
+          <p class="helper disclosure">抠图先在浏览器本地完成；点击生成后，照片和款式素材会发送到图像生成服务。</p>
           <button id="generate-button" class="primary-button" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
-            <span id="generate-label">保存示例试戴图</span>
+            <span id="generate-label">生成自然试戴效果</span>
             <span class="action-arrow" aria-hidden="true">↗</span>
           </button>
           <p class="error-message" id="error-message" role="alert" hidden></p>
@@ -99,7 +100,7 @@
 
     <section class="collection" id="collection" aria-labelledby="collection-title">
       <div class="wrap">
-        <div class="collection-heading"><div><span class="kicker">THE LITTLE COLLECTION</span><h2 id="collection-title">每一条，<em>都想给它试试。</em></h2></div><span>四款日常小心情 / 04</span></div>
+        <div class="collection-heading"><div><span class="kicker">THE LITTLE COLLECTION</span><h2 id="collection-title">每一条，<em>都想给它试试。</em></h2></div><span>五款日常小心情 / 05</span></div>
         <div class="product-grid" id="product-grid"></div>
         <p class="demo-note">当前款式和价格为演示数据。正式售卖前请替换为店铺真实商品信息。</p>
       </div>
@@ -108,7 +109,7 @@
     <section class="about wrap" id="about">
       <span class="about-star" aria-hidden="true">✳</span>
       <div><span class="kicker">A LITTLE NOTE</span><h2>把它的可爱，<br>提前看见。</h2></div>
-      <p>上传宠物照片后，浏览器会先识别并抠出宠物，再叠加口水巾的布料和光影效果。你只需要点击定位脖颈、调整大小，就能快速看到试戴效果。</p>
+      <p>上传宠物照片后，浏览器会先识别并抠出宠物，再用你选中的口水巾生成自然试戴效果。你只需要点击定位脖颈、调整大小，就能先校准本地预览，再生成最终图片。</p>
     </section>
   </main>
   <footer><div class="wrap footer-inner"><span class="footer-brand">尾巴日记 <small>TAIL TALES</small></span><span>给每一只独一无二的宠物。</span><a href="#top">回到顶部 ↑</a></div></footer>

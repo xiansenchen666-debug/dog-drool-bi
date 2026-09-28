@@ -4,6 +4,7 @@ const elements = {
   input: document.querySelector("#photo-input"),
   uploadLabel: document.querySelector("#upload-label"),
   preview: document.querySelector("#preview-image"),
+  generated: document.querySelector("#generated-image"),
   previewLabel: document.querySelector("#preview-label"),
   previewCaption: document.querySelector("#preview-caption"),
   styles: document.querySelector("#style-options"),
@@ -23,6 +24,9 @@ const elements = {
 let products = [];
 let selected = null;
 let photoUrl = null;
+let sourceFile = null;
+let cutoutBlob = null;
+let generatedImage = null;
 let scene3d = null;
 let calibrating = false;
 let uploadRequest = 0;
@@ -55,7 +59,15 @@ function showError(message) {
   elements.error.hidden = !message;
 }
 
+function clearGeneratedResult() {
+  generatedImage = null;
+  elements.generated.src = "";
+  elements.generated.hidden = true;
+  elements.generateLabel.textContent = sourceFile ? "生成自然试戴效果" : "请先上传宠物照片";
+}
+
 function setSelected(product) {
+  clearGeneratedResult();
   selected = product;
   elements.selectedName.textContent = product.name;
   elements.selectedPrice.textContent = `¥${product.price}`;
@@ -107,6 +119,9 @@ elements.input.addEventListener("change", async () => {
     return;
   }
   showError("");
+  sourceFile = file;
+  cutoutBlob = null;
+  clearGeneratedResult();
   if (photoUrl) URL.revokeObjectURL(photoUrl);
   photoUrl = URL.createObjectURL(file);
   elements.preview.src = photoUrl;
@@ -119,8 +134,8 @@ elements.input.addEventListener("change", async () => {
   elements.stage.classList.remove("calibrating");
   elements.calibrate.textContent = "定位脖颈 ↗";
   elements.uploadLabel.textContent = file.name.length > 24 ? `${file.name.slice(0, 21)}…` : file.name;
-  elements.generate.disabled = !scene3d;
-  elements.generateLabel.textContent = "保存宠物试戴图";
+  elements.generate.disabled = false;
+  elements.generateLabel.textContent = "生成自然试戴效果";
 
   const requestId = ++uploadRequest;
   setProcessing(true);
@@ -138,6 +153,7 @@ elements.input.addEventListener("change", async () => {
       );
     });
     if (requestId !== uploadRequest) return;
+    cutoutBlob = cutout;
     const cutoutUrl = URL.createObjectURL(cutout);
     scene3d?.setPetCutout(cutoutUrl);
     elements.previewCaption.textContent = `${selected.name} · 已抠出宠物，可定位口水巾`;
@@ -145,6 +161,7 @@ elements.input.addEventListener("change", async () => {
   } catch (error) {
     if (requestId !== uploadRequest) return;
     scene3d?.clearPetCutout();
+    cutoutBlob = null;
     elements.previewCaption.textContent = `${selected.name} · 可定位口水巾`;
     showError("本地抠图暂时失败，已保留原图试戴效果，请重试。");
   } finally {
@@ -153,6 +170,7 @@ elements.input.addEventListener("change", async () => {
 });
 
 elements.calibrate.addEventListener("click", () => {
+  clearGeneratedResult();
   calibrating = !calibrating;
   elements.stage.classList.toggle("calibrating", calibrating);
   elements.calibrate.textContent = calibrating ? "点一下宠物的脖颈" : "定位脖颈 ↗";
@@ -160,6 +178,7 @@ elements.calibrate.addEventListener("click", () => {
 
 elements.stage.addEventListener("click", (event) => {
   if (!calibrating || !scene3d) return;
+  clearGeneratedResult();
   const bounds = elements.stage.getBoundingClientRect();
   scene3d.setPlacement((event.clientX - bounds.left) / bounds.width, (event.clientY - bounds.top) / bounds.height);
   calibrating = false;
@@ -168,12 +187,14 @@ elements.stage.addEventListener("click", (event) => {
 });
 
 elements.size.addEventListener("input", () => {
+  clearGeneratedResult();
   elements.sizeValue.textContent = `${elements.size.value}%`;
   scene3d?.setSize(Number(elements.size.value));
 });
 
 document.querySelectorAll("[data-view]").forEach((button) => {
   button.addEventListener("click", () => {
+    clearGeneratedResult();
     document.querySelectorAll("[data-view]").forEach((item) => {
       item.setAttribute("aria-pressed", String(item === button));
     });
@@ -181,21 +202,61 @@ document.querySelectorAll("[data-view]").forEach((button) => {
   });
 });
 
+async function requestTryOnImage() {
+  if (!sourceFile || !selected) throw new Error("请先上传宠物照片并选择口水巾。");
+  const bandanaResponse = await fetch(selected.asset);
+  if (!bandanaResponse.ok) throw new Error("口水巾素材加载失败，请刷新页面重试。");
+  const bandanaBlob = await bandanaResponse.blob();
+  const form = new FormData();
+  form.append("pet", sourceFile, sourceFile.name);
+  if (cutoutBlob) form.append("cutout", cutoutBlob, "pet-cutout.png");
+  form.append("bandana", bandanaBlob, `${selected.id}.png`);
+  form.append(
+    "prompt",
+    `把宠物自然地戴上“${selected.name}”口水巾。${selected.detail} 保持宠物的品种、脸部、毛发、姿势、背景和照片构图不变，只在脖颈位置添加口水巾，让布料贴合宠物身体并有真实阴影，生成自然的商品试戴效果图。`,
+  );
+  const response = await fetch("/api/try-on", { method: "POST", body: form });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || "图像生成失败，请稍后重试。");
+  if (typeof payload.image !== "string" || !payload.image) {
+    throw new Error("生成服务没有返回图片，请稍后重试。");
+  }
+  return payload.image;
+}
+
 elements.generate.addEventListener("click", async () => {
-  if (!scene3d || !selected) return;
-  elements.generate.disabled = true;
-  showError("");
-  try {
-    const blob = await scene3d.exportPng();
-    const url = URL.createObjectURL(blob);
+  if (generatedImage) {
     const link = document.createElement("a");
-    link.href = url;
+    link.href = generatedImage;
     link.download = `尾巴日记-${selected.name}-宠物试戴.png`;
     link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    return;
+  }
+  if (!sourceFile || !selected) {
+    showError("请先上传一张宠物照片。");
+    return;
+  }
+  elements.generate.disabled = true;
+  showError("");
+  setProcessing(true, "正在提交宠物试戴任务", 8);
+  let progress = 8;
+  const progressTimer = setInterval(() => {
+    progress = Math.min(90, progress + Math.max(1, Math.round((90 - progress) / 8)));
+    setProcessing(true, progress < 35 ? "正在准备图片" : "正在生成自然试戴效果", progress);
+  }, 700);
+  try {
+    generatedImage = await requestTryOnImage();
+    elements.generated.src = generatedImage;
+    elements.generated.hidden = false;
+    elements.previewCaption.textContent = `${selected.name} · 已生成自然试戴效果`;
+    elements.generateLabel.textContent = "下载生成效果图";
+    setProcessing(true, "生成完成", 100);
   } catch (error) {
+    generatedImage = null;
     showError(error instanceof Error ? error.message : "保存失败，请重试。");
   } finally {
+    clearInterval(progressTimer);
+    setProcessing(false);
     elements.generate.disabled = false;
   }
 });
@@ -206,6 +267,7 @@ try {
     document.querySelector("#render-canvas"),
     elements.preview,
   );
+  elements.generate.disabled = true;
   const response = await fetch("/api/catalog");
   if (!response.ok) throw new Error("款式加载失败，请刷新页面重试。");
   products = await response.json();

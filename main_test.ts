@@ -23,6 +23,23 @@ Deno.test("only serves public files", async () => {
   assert(source.status === 404, "source files should not be served");
   const traversal = await handler(new Request("http://localhost/%2e%2e/main.ts"));
   assert(traversal.status === 404, "path traversal should fail");
-  const oldApi = await handler(new Request("http://localhost/api/try-on", { method: "POST" }));
-  assert(oldApi.status === 405, "there should be no image generation endpoint");
+  const getApi = await handler(new Request("http://localhost/api/try-on"));
+  assert(getApi.status === 405, "try-on should require POST");
+});
+
+Deno.test("validates try-on uploads before contacting the image service", async () => {
+  const missingImages = await handler(new Request("http://localhost/api/try-on", {
+    method: "POST",
+    body: new FormData(),
+  }));
+  assert(missingImages.status === 400, "try-on should require image files");
+
+  const form = new FormData();
+  form.append("pet", new File(["pet"], "pet.jpg", { type: "image/jpeg" }));
+  form.append("bandana", new File(["bandana"], "bandana.png", { type: "image/png" }));
+  const missingConfig = await handler(new Request("http://localhost/api/try-on", {
+    method: "POST",
+    body: form,
+  }));
+  assert(missingConfig.status === 503, "try-on should explain missing API configuration");
 });
