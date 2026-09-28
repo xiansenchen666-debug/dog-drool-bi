@@ -1,28 +1,29 @@
+import { createTryOnRenderer } from "./scene.js";
+
 const elements = {
   input: document.querySelector("#photo-input"),
   uploadLabel: document.querySelector("#upload-label"),
   preview: document.querySelector("#preview-image"),
   previewLabel: document.querySelector("#preview-label"),
   previewCaption: document.querySelector("#preview-caption"),
-  badge: document.querySelector("#image-badge"),
   styles: document.querySelector("#style-options"),
   productGrid: document.querySelector("#product-grid"),
   selectedName: document.querySelector("#selected-name"),
   selectedPrice: document.querySelector("#selected-price"),
   generate: document.querySelector("#generate-button"),
   generateLabel: document.querySelector("#generate-label"),
-  download: document.querySelector("#download-button"),
-  loading: document.querySelector("#loading-layer"),
+  calibrate: document.querySelector("#calibrate-button"),
+  stage: document.querySelector("#preview"),
+  size: document.querySelector("#size-range"),
+  sizeValue: document.querySelector("#size-value"),
   error: document.querySelector("#error-message"),
 };
 
 let products = [];
 let selected = null;
-let photo = null;
 let photoUrl = null;
-let resultUrl = null;
-let busy = false;
-let selectionVersion = 0;
+let scene3d = null;
+let calibrating = false;
 
 function showError(message) {
   elements.error.textContent = message;
@@ -30,34 +31,16 @@ function showError(message) {
 }
 
 function setSelected(product) {
-  selectionVersion++;
   selected = product;
   elements.selectedName.textContent = product.name;
   elements.selectedPrice.textContent = `¥${product.price}`;
-  document.querySelectorAll("[data-product-id]").forEach((button) => {
-    if (button.classList.contains("style-option")) {
-      button.setAttribute("aria-pressed", String(button.dataset.productId === product.id));
-    }
+  document.querySelectorAll(".style-option").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.productId === product.id));
   });
-  if (resultUrl) {
-    resultUrl = null;
-    elements.download.hidden = true;
-    showOriginal();
-  }
-}
-
-function showOriginal() {
-  elements.preview.src = photoUrl || "/assets/sample-dog.jpg";
-  elements.preview.alt = photo ? "上传的狗狗照片" : "示例金毛犬照片";
-  elements.previewLabel.textContent = photo ? "原始照片" : "示例照片";
-  elements.previewCaption.textContent = photo ? "选好款式，生成试戴图" : "先上传一张狗狗照片";
-  elements.badge.hidden = false;
-  elements.badge.innerHTML = `<span aria-hidden="true">✳</span> ${photo ? "等待生成" : "等待你的狗狗"}`;
+  scene3d?.setStyle(product);
 }
 
 function renderProducts() {
-  elements.styles.replaceChildren();
-  elements.productGrid.replaceChildren();
   for (const product of products) {
     const option = document.createElement("button");
     option.type = "button";
@@ -73,7 +56,7 @@ function renderProducts() {
     const card = document.createElement("article");
     card.className = "product-card";
     card.innerHTML = `
-      <button class="product-art" type="button" style="--tile:${product.color}" data-product-id="${product.id}" aria-label="试戴${product.name}">
+      <button class="product-art" type="button" style="--tile:${product.color}" aria-label="试戴${product.name}">
         <span>NEW SEASON</span><img src="${product.asset}" alt="${product.name}口水巾">
       </button>
       <div class="product-details"><div><h3>${product.name}</h3><p>${product.subtitle}</p></div><strong>¥${product.price}</strong></div>
@@ -100,68 +83,80 @@ elements.input.addEventListener("change", () => {
   }
   showError("");
   if (photoUrl) URL.revokeObjectURL(photoUrl);
-  photo = file;
-  selectionVersion++;
   photoUrl = URL.createObjectURL(file);
-  resultUrl = null;
+  elements.preview.src = photoUrl;
+  elements.preview.alt = "上传的狗狗照片与 3D 口水巾试戴效果";
+  elements.previewLabel.textContent = "你的狗狗";
+  elements.previewCaption.textContent = `${selected.name} · 实时 3D 试戴`;
+  scene3d?.setPlacement(.5, .7);
+  calibrating = false;
+  elements.stage.classList.remove("calibrating");
+  elements.calibrate.textContent = "定位脖颈 ↗";
   elements.uploadLabel.textContent = file.name.length > 24 ? `${file.name.slice(0, 21)}…` : file.name;
-  elements.generate.disabled = false;
-  elements.generateLabel.textContent = "生成立体试戴图";
-  elements.download.hidden = true;
-  showOriginal();
+  elements.generate.disabled = !scene3d;
+  elements.generateLabel.textContent = "生成并保存 3D 效果图";
+});
+
+elements.calibrate.addEventListener("click", () => {
+  calibrating = !calibrating;
+  elements.stage.classList.toggle("calibrating", calibrating);
+  elements.calibrate.textContent = calibrating ? "点一下狗狗的脖颈" : "定位脖颈 ↗";
+});
+
+elements.stage.addEventListener("click", (event) => {
+  if (!calibrating || !scene3d) return;
+  const bounds = elements.stage.getBoundingClientRect();
+  scene3d.setPlacement((event.clientX - bounds.left) / bounds.width, (event.clientY - bounds.top) / bounds.height);
+  calibrating = false;
+  elements.stage.classList.remove("calibrating");
+  elements.calibrate.textContent = "重新定位 ↗";
+});
+
+elements.size.addEventListener("input", () => {
+  elements.sizeValue.textContent = `${elements.size.value}%`;
+  scene3d?.setSize(Number(elements.size.value));
+});
+
+document.querySelectorAll("[data-view]").forEach((button) => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll("[data-view]").forEach((item) => {
+      item.setAttribute("aria-pressed", String(item === button));
+    });
+    scene3d?.setView(button.dataset.view);
+  });
 });
 
 elements.generate.addEventListener("click", async () => {
-  if (!photo || !selected || busy) return;
-  busy = true;
-  showError("");
+  if (!scene3d || !selected) return;
   elements.generate.disabled = true;
-  elements.generateLabel.textContent = "正在生成…";
-  elements.loading.hidden = false;
-  const requestedProduct = selected;
-  const requestedVersion = selectionVersion;
-  const form = new FormData();
-  form.append("photo", photo, photo.name);
-  form.append("productId", requestedProduct.id);
+  showError("");
   try {
-    const response = await fetch("/api/try-on", { method: "POST", body: form });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "生成失败，请稍后再试。");
-    if (requestedVersion !== selectionVersion) return;
-    resultUrl = data.image;
-    elements.preview.src = resultUrl;
-    elements.preview.alt = `狗狗佩戴${requestedProduct.name}口水巾的 AI 生成试戴图`;
-    elements.previewLabel.textContent = "AI 试戴效果";
-    elements.previewCaption.textContent = `${requestedProduct.name} · 已生成`;
-    elements.badge.hidden = true;
-    elements.download.hidden = false;
+    const blob = await scene3d.exportPng();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `尾巴日记-${selected.name}-3D试戴.png`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch (error) {
-    if (requestedVersion === selectionVersion) {
-      showError(error instanceof Error ? error.message : "生成失败，请稍后再试。");
-    }
+    showError(error instanceof Error ? error.message : "保存失败，请重试。");
   } finally {
-    busy = false;
-    elements.loading.hidden = true;
     elements.generate.disabled = false;
-    elements.generateLabel.textContent = "重新生成试戴图";
   }
 });
 
-elements.download.addEventListener("click", () => {
-  if (!resultUrl) return;
-  const link = document.createElement("a");
-  link.href = resultUrl;
-  link.download = `尾巴日记-${selected.name}-试戴.png`;
-  link.click();
-});
-
 try {
+  scene3d = createTryOnRenderer(
+    document.querySelector("#preview"),
+    document.querySelector("#render-canvas"),
+    elements.preview,
+  );
   const response = await fetch("/api/catalog");
-  if (!response.ok) throw new Error();
+  if (!response.ok) throw new Error("款式加载失败，请刷新页面重试。");
   products = await response.json();
-  if (!products.length) throw new Error();
+  if (!products.length) throw new Error("暂无可用款式。");
   renderProducts();
-} catch {
-  showError("款式加载失败，请刷新页面重试。");
+} catch (error) {
+  showError(error instanceof Error ? error.message : "无法启动 3D 试戴，请使用支持 WebGL 的浏览器。");
   elements.selectedName.textContent = "暂时无法加载";
 }
