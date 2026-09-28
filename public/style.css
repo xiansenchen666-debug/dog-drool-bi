@@ -46,10 +46,14 @@ nav a:hover, footer a:hover { color: #d5654f; }
 .preview-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 11px; color: #969e94; font-size: 11px; }
 .preview-foot button { padding: 0; border: 0; background: none; color: #52765c; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .preview-foot button:hover { color: #23452d; text-decoration: underline; }
-.loading-layer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1f3029ba; color: white; text-align: center; }
+.loading-layer { position: absolute; inset: 0; z-index: 4; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1f3029ba; color: white; text-align: center; }
 .loading-layer strong { font-size: 18px; }
 .loading-layer p { margin: 9px 0 0; font-size: 12px; opacity: .8; }
 .loading-spinner { width: 37px; height: 37px; margin-bottom: 22px; border: 3px solid #ffffff60; border-top-color: white; border-radius: 50%; animation: spin .8s linear infinite; }
+.progress-row { display: flex; align-items: center; gap: 9px; width: min(78%, 310px); margin-top: 20px; }
+.progress-track { flex: 1; height: 7px; overflow: hidden; border-radius: 99px; background: #ffffff40; }
+.progress-fill { display: block; width: 0; height: 100%; border-radius: inherit; background: #f3c5a9; transition: width .18s ease-out; }
+.progress-value { min-width: 38px; color: #fff6ed; font-size: 11px; text-align: right; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .controls { padding: 24px 27px 20px; border: 1px solid #d9e0d7; border-radius: 4px; background: #fffefa; }

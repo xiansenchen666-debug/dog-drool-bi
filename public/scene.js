@@ -1,6 +1,6 @@
 import * as THREE from "./vendor/three.module.js";
 
-function bandanaGeometry() {
+function triangleBandanaGeometry() {
   const rows = 26;
   const columns = 32;
   const positions = [];
@@ -19,6 +19,44 @@ function bandanaGeometry() {
       const z = .16 - side * side * (.3 - t * .13) + fold;
       positions.push(x, y, z);
       uvs.push((80 + (320 * t) + 640 * width * s) / 800, 1 - (145 + 425 * t) / 650);
+      if (row < rows && column < columns) {
+        const a = row * (columns + 1) + column;
+        indices.push(a, a + columns + 1, a + 1, a + 1, a + columns + 1, a + columns + 2);
+      }
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function bibBandanaGeometry() {
+  const rows = 30;
+  const columns = 36;
+  const positions = [];
+  const uvs = [];
+  const indices = [];
+
+  for (let row = 0; row <= rows; row++) {
+    const t = row / rows;
+    const bottom = Math.max(0, Math.min(1, (t - .62) / .38));
+    const width = 1.28 - .16 * t - .12 * bottom;
+    for (let column = 0; column <= columns; column++) {
+      const s = column / columns;
+      const side = s * 2 - 1;
+      const center = 1 - side * side;
+      const x = side * width;
+      const neckDip = (1 - Math.min(1, t / .2)) * center * .1;
+      const roundedHem = bottom * center * .2;
+      const y = .52 - t * 1.06 - neckDip - roundedHem;
+      const fold = Math.sin(s * Math.PI * 9) * (.018 + t * .035);
+      const z = .16 - side * side * (.25 - t * .1) + fold;
+      positions.push(x, y, z);
+      uvs.push(.06 + .88 * s, .92 - .78 * t);
       if (row < rows && column < columns) {
         const a = row * (columns + 1) + column;
         indices.push(a, a + columns + 1, a + 1, a + 1, a + columns + 1, a + columns + 2);
@@ -74,13 +112,15 @@ export function createTryOnRenderer(stage, canvas, photo) {
   camera.position.set(0, 0, 6);
   camera.lookAt(0, 0, 0);
 
-  const geometry = bandanaGeometry();
+  const geometries = {
+    triangle: triangleBandanaGeometry(),
+    bib: bibBandanaGeometry(),
+  };
   const group = new THREE.Group();
-  group.scale.y = .68;
   group.rotation.x = -.12;
   scene.add(group);
 
-  const shade = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+  const shade = new THREE.Mesh(geometries.triangle, new THREE.MeshBasicMaterial({
     color: 0x2a241f,
     transparent: true,
     opacity: .17,
@@ -89,7 +129,7 @@ export function createTryOnRenderer(stage, canvas, photo) {
   }));
   shade.position.set(.035, -.04, -.055);
   group.add(shade);
-  const cloth = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+  const cloth = new THREE.Mesh(geometries.triangle, new THREE.MeshStandardMaterial({
     roughness: .9,
     metalness: 0,
     transparent: true,
@@ -111,6 +151,7 @@ export function createTryOnRenderer(stage, canvas, photo) {
   let stageHeight = 1;
   let placement = { x: .5, y: .7 };
   let size = 1;
+  let currentShape = "triangle";
 
   function render() {
     renderer.render(scene, camera);
@@ -119,7 +160,7 @@ export function createTryOnRenderer(stage, canvas, photo) {
   function positionBandana() {
     group.position.x = (placement.x - .5) * 5;
     group.position.y = (0.5 - placement.y) * 5 * stageHeight / stageWidth - .34 * size;
-    group.scale.set(size, .68 * size, size);
+    group.scale.set(size, (currentShape === "bib" ? .78 : .68) * size, size);
     render();
   }
 
@@ -140,6 +181,10 @@ export function createTryOnRenderer(stage, canvas, photo) {
 
   function setStyle(product) {
     selectedId = product.id;
+    currentShape = product.shape === "bib" ? "bib" : "triangle";
+    cloth.geometry = geometries[currentShape];
+    shade.geometry = geometries[currentShape];
+    positionBandana();
     const id = selectedId;
     loader.load(product.asset, (texture) => {
       if (selectedId !== id) {

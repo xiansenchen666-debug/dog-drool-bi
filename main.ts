@@ -46,8 +46,8 @@ async function staticFile(pathname: string, head: boolean): Promise<Response> {
 export function handler(request: Request): Response | Promise<Response> {
   const pathname = new URL(request.url).pathname;
   if (pathname === "/api/catalog" && request.method === "GET") {
-    return Response.json(products.map(({ id, name, price, subtitle, color, asset }) =>
-      ({ id, name, price, subtitle, color, asset })
+    return Response.json(products.map(({ id, name, price, subtitle, color, asset, shape }) =>
+      ({ id, name, price, subtitle, color, asset, shape })
     ));
   }
   if (request.method !== "GET" && request.method !== "HEAD") {

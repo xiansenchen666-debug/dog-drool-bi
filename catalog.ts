@@ -6,6 +6,7 @@ export const products = [
     subtitle: "把晴天系在脖子上",
     color: "#f5d9d2",
     asset: "/assets/cherry.png",
+    shape: "triangle",
     detail: "奶油白底、红色樱桃印花，红色包边",
   },
   {
@@ -15,6 +16,7 @@ export const products = [
     subtitle: "清清爽爽的蓝色心情",
     color: "#d9e9ee",
     asset: "/assets/sky.png",
+    shape: "triangle",
     detail: "浅蓝和白色细格纹，深蓝色包边",
   },
   {
@@ -24,6 +26,7 @@ export const products = [
     subtitle: "带一朵小花出门",
     color: "#f2e7bb",
     asset: "/assets/daisy.png",
+    shape: "triangle",
     detail: "暖黄色面料、白色雏菊印花，奶白色包边",
   },
   {
@@ -33,6 +36,7 @@ export const products = [
     subtitle: "甜甜的蝴蝶结造型",
     color: "#f3e9d5",
     asset: "/assets/cream-pink-bow.png",
+    shape: "bib",
     detail: "奶油色围兜、粉色蝴蝶结，粉绿条纹底和手工花朵贴布",
   },
   {
@@ -42,6 +46,7 @@ export const products = [
     subtitle: "和小树一起去冒险",
     color: "#dce7d8",
     asset: "/assets/forest.png",
+    shape: "triangle",
     detail: "鼠尾草绿底、深绿叶片印花，深绿色包边",
   },
 ] as const;

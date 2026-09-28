@@ -29,17 +29,24 @@ let uploadRequest = 0;
 
 const BACKGROUND_REMOVAL_MODULE =
   "https://esm.sh/@imgly/background-removal@1.5.8?bundle";
+const BACKGROUND_REMOVAL_DATA =
+  "https://staticimgly.com/@imgly/background-removal-data/1.5.8/dist/";
 
-function setProcessing(active, message = "正在用本地工具抠出宠物") {
+function setProcessing(active, message = "正在用本地工具抠出宠物", progress = 0) {
   elements.processing.hidden = !active;
   elements.processing.querySelector("strong").textContent = message;
+  elements.processing.querySelector(".progress-fill").style.width = `${progress}%`;
+  elements.processing.querySelector(".progress-value").textContent = `${progress}%`;
   elements.input.disabled = active;
 }
 
-async function removePetBackgroundLocally(file) {
+async function removePetBackgroundLocally(file, onProgress) {
   const { removeBackground } = await import(BACKGROUND_REMOVAL_MODULE);
   return removeBackground(file, {
+    model: "isnet_quint8",
+    publicPath: BACKGROUND_REMOVAL_DATA,
     output: { format: "image/png" },
+    progress: onProgress,
   });
 }
 
@@ -119,11 +126,22 @@ elements.input.addEventListener("change", async () => {
   setProcessing(true);
   showError("");
   try {
-    const cutout = await removePetBackgroundLocally(file);
+    const cutout = await removePetBackgroundLocally(file, (key, current, total) => {
+      if (requestId !== uploadRequest) return;
+      const isDownload = key.startsWith("fetch:");
+      const ratio = total > 0 ? Math.max(0, Math.min(1, current / total)) : 0;
+      const progress = isDownload ? Math.round(ratio * 82) : Math.round(82 + ratio * 16);
+      setProcessing(
+        true,
+        isDownload ? "正在下载开源抠图组件" : "正在分析宠物轮廓",
+        Math.min(98, progress),
+      );
+    });
     if (requestId !== uploadRequest) return;
     const cutoutUrl = URL.createObjectURL(cutout);
     scene3d?.setPetCutout(cutoutUrl);
     elements.previewCaption.textContent = `${selected.name} · 已抠出宠物，可定位口水巾`;
+    setProcessing(true, "抠图完成", 100);
   } catch (error) {
     if (requestId !== uploadRequest) return;
     scene3d?.clearPetCutout();

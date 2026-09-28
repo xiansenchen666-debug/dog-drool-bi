@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#f8f8f4">
 <meta name="description" content="上传宠物照片，用免费开源工具抠出宠物后选择口水巾款式，快速生成试戴效果图。">
   <title>尾巴日记 · 宠物口水巾试戴</title>
-  <link rel="stylesheet" href="/style.css?v=local-cutout2">
-  <script src="/app.js?v=local-cutout2" type="module"></script>
+  <link rel="stylesheet" href="/style.css?v=local-cutout3">
+  <script src="/app.js?v=local-cutout3" type="module"></script>
 </head>
 <body>
   <header class="site-header">
@@ -46,6 +46,10 @@
             <div class="loading-spinner" aria-hidden="true"></div>
             <strong>正在用本地工具抠出宠物</strong>
             <p>首次使用需要加载开源组件，请稍等片刻</p>
+            <div class="progress-row">
+              <div class="progress-track" aria-hidden="true"><span class="progress-fill"></span></div>
+              <output class="progress-value">0%</output>
+            </div>
           </div>
         </div>
         <div class="preview-foot"><span id="preview-caption">示例试戴 · 换上你家宠物的照片</span><button id="calibrate-button" type="button" title="点选照片中宠物的脖颈，不用拖动">定位脖颈 ↗</button></div>
