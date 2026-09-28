@@ -23,4 +23,4 @@ API 密钥必须只配置在 Deno Deploy 环境变量，不能提交进仓库。
 
 在 `catalog.ts` 中更新商品名称、价格、说明与素材路径。将真实口水巾的清晰正面 PNG/WebP 放进 `public/assets/`，修改对应 `asset` 字段。当前四款、价格与品牌均为演示内容，页面没有支付或订单功能。演示商品图可以使用 `python tools/render_products.py` 重新生成，正式商品请直接替换成实拍素材。
 
-示例狗狗照片来自 [Unsplash](https://unsplash.com/photos/a-golden-retriever-looking-at-the-camera-m_F5YfnXQp8)，正式发布时建议替换为自有照片并确认素材授权。客户上传的照片仅在本次请求中发送给图像 API，本站不存储照片或生成结果。
+示例狗狗照片来自 Unsplash 图片服务，正式发布时建议替换为自有照片并确认素材授权。客户上传的照片仅在本次请求中发送给图像 API，本站不存储照片或生成结果。
