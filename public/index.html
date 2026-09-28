@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f8f4">
+  <meta name="description" content="上传爱犬照片，选择喜欢的口水巾，生成有立体佩戴效果的专属试戴图。">
+  <title>尾巴日记 · 狗狗口水巾试戴</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#top" aria-label="尾巴日记首页">
+        <span class="brand-symbol" aria-hidden="true">✳</span>
+        <span>尾巴日记<small>TAIL TALES</small></span>
+      </a>
+      <nav aria-label="主导航"><a href="#studio">在线试戴</a><a href="#collection">全部款式</a><a href="#about">关于试戴</a></nav>
+      <a class="header-link" href="#studio">开始试戴 <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="intro wrap" aria-labelledby="page-title">
+      <div>
+        <span class="eyebrow"><span aria-hidden="true">✳</span> FOR YOUR BEST FRIEND</span>
+        <h1 id="page-title">今天的可爱，<br><em>戴在脖子上。</em></h1>
+        <p>上传狗狗照片，挑一条心动的口水巾，看看它穿上的样子。</p>
+      </div>
+      <span class="intro-doodle" aria-hidden="true">好看，也要好玩 ✳</span>
+    </section>
+
+    <section class="studio wrap" id="studio" aria-labelledby="studio-title">
+      <div class="preview-area">
+        <div class="section-heading">
+          <div><span class="kicker">THE FITTING ROOM</span><h2 id="studio-title">狗狗试衣间 <span aria-hidden="true">✳</span></h2></div>
+          <span class="preview-label" id="preview-label">示例照片</span>
+        </div>
+        <div class="preview" id="preview">
+          <img id="preview-image" src="/assets/sample-dog.jpg" alt="示例金毛犬照片">
+          <div class="image-badge" id="image-badge"><span aria-hidden="true">✳</span> 等待你的狗狗</div>
+          <div class="loading-layer" id="loading-layer" hidden>
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <strong>正在为它换上新衣服…</strong>
+            <p>生成需要一点时间，请保持页面开启</p>
+          </div>
+        </div>
+        <div class="preview-foot"><span id="preview-caption">先上传一张狗狗照片</span><span>TAIL TALES · STUDIO 01</span></div>
+      </div>
+
+      <div class="controls">
+        <span class="kicker">MAKE IT YOURS</span>
+        <h2>一起挑一挑<span class="dot">.</span></h2>
+        <p class="controls-intro">选好照片和款式，就能生成一张专属试戴图。</p>
+
+        <div class="control-group">
+          <div class="step-title"><span>01</span><h3>上传狗狗照片</h3></div>
+          <label class="upload-button" for="photo-input">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+            <span id="upload-label">选择一张照片</span>
+            <span class="action-arrow" aria-hidden="true">↗</span>
+          </label>
+          <input id="photo-input" type="file" accept="image/jpeg,image/png,image/webp">
+          <p class="helper">建议正面拍摄、脖颈清晰 · JPG / PNG / WebP，10 MB 内</p>
+        </div>
+
+        <div class="control-group">
+          <div class="step-title"><span>02</span><h3>选择口水巾</h3></div>
+          <div class="style-options" id="style-options" role="group" aria-label="选择口水巾款式"></div>
+          <div class="selected-line"><span id="selected-name">加载中…</span><strong id="selected-price"></strong></div>
+        </div>
+
+        <div class="control-group result-group">
+          <div class="step-title"><span>03</span><h3>生成试戴图</h3></div>
+          <p class="helper disclosure">生成时，照片会发送给图像服务处理；本站不保存上传照片或生成结果。效果为 AI 模拟，实际商品以实物为准。</p>
+          <button id="generate-button" class="primary-button" type="button" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2ZM19 17l.6 1.4L21 19l-1.4.6L19 21l-.6-1.4L17 19l1.4-.6L19 17Z"/></svg>
+            <span id="generate-label">先上传照片</span>
+            <span class="action-arrow" aria-hidden="true">↗</span>
+          </button>
+          <button id="download-button" class="secondary-button" type="button" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+            保存试戴图片
+          </button>
+          <p class="error-message" id="error-message" role="alert" hidden></p>
+        </div>
+        <p class="controls-note">画面是 AI 生成的立体佩戴效果，不是可旋转的 3D 模型。</p>
+      </div>
+    </section>
+
+    <section class="collection" id="collection" aria-labelledby="collection-title">
+      <div class="wrap">
+        <div class="collection-heading"><div><span class="kicker">THE LITTLE COLLECTION</span><h2 id="collection-title">每一条，<em>都想给它试试。</em></h2></div><span>四款日常小心情 / 04</span></div>
+        <div class="product-grid" id="product-grid"></div>
+        <p class="demo-note">当前款式和价格为演示数据。正式售卖前请替换为店铺真实商品信息。</p>
+      </div>
+    </section>
+
+    <section class="about wrap" id="about">
+      <span class="about-star" aria-hidden="true">✳</span>
+      <div><span class="kicker">A LITTLE NOTE</span><h2>把它的可爱，<br>提前看见。</h2></div>
+      <p>上传一张狗狗照片，选好喜欢的款式，就可以生成一张自然佩戴的模拟图。真实的布料褶皱、光影和小小的领口细节，让挑选这件事更有意思。</p>
+    </section>
+  </main>
+  <footer><div class="wrap footer-inner"><span class="footer-brand">尾巴日记 <small>TAIL TALES</small></span><span>给每一只独一无二的小狗。</span><a href="#top">回到顶部 ↑</a></div></footer>
+</body>
+</html>
