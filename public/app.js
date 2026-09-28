@@ -1,5 +1,3 @@
-import { createTryOnRenderer } from "./scene.js";
-
 const elements = {
   input: document.querySelector("#photo-input"),
   uploadLabel: document.querySelector("#upload-label"),
@@ -86,7 +84,7 @@ function renderProducts() {
     option.style.setProperty("--tile", product.color);
     option.setAttribute("aria-label", product.name);
     option.title = product.name;
-    option.innerHTML = `<img src="${product.asset}" alt="">`;
+    option.innerHTML = `<img src="${product.asset}" alt="" loading="lazy" decoding="async">`;
     option.addEventListener("click", () => setSelected(product));
     elements.styles.append(option);
 
@@ -94,7 +92,7 @@ function renderProducts() {
     card.className = "product-card";
     card.innerHTML = `
       <button class="product-art" type="button" style="--tile:${product.color}" aria-label="试戴${product.name}">
-        <span>NEW SEASON</span><img src="${product.asset}" alt="${product.name}口水巾">
+        <span>NEW SEASON</span><img src="${product.asset}" alt="${product.name}口水巾" loading="lazy" decoding="async">
       </button>
       <div class="product-details"><div><h3>${product.name}</h3><p>${product.subtitle}</p></div><strong>¥${product.price}</strong></div>
       <button class="try-link" type="button">试试这款 <span aria-hidden="true">↗</span></button>
@@ -261,19 +259,28 @@ elements.generate.addEventListener("click", async () => {
   }
 });
 
-try {
-  scene3d = createTryOnRenderer(
-    document.querySelector("#preview"),
-    document.querySelector("#render-canvas"),
-    elements.preview,
-  );
-  elements.generate.disabled = true;
-  const response = await fetch("/api/catalog");
-  if (!response.ok) throw new Error("款式加载失败，请刷新页面重试。");
-  products = await response.json();
-  if (!products.length) throw new Error("暂无可用款式。");
-  renderProducts();
-} catch (error) {
-  showError(error instanceof Error ? error.message : "无法启动 3D 试戴，请使用支持 WebGL 的浏览器。");
-  elements.selectedName.textContent = "暂时无法加载";
+async function initializeStudio() {
+  try {
+    const [{ createTryOnRenderer }, response] = await Promise.all([
+      import("./scene.js"),
+      fetch("/api/catalog"),
+    ]);
+    if (!response.ok) throw new Error("款式加载失败，请刷新页面重试。");
+    products = await response.json();
+    if (!products.length) throw new Error("暂无可用款式。");
+    scene3d = createTryOnRenderer(
+      document.querySelector("#preview"),
+      document.querySelector("#render-canvas"),
+      elements.preview,
+    );
+    renderProducts();
+  } catch (error) {
+    showError(error instanceof Error ? error.message : "无法启动 3D 试戴，请使用支持 WebGL 的浏览器。");
+    elements.selectedName.textContent = "暂时无法加载";
+  }
 }
+
+const scheduleStudio = window.requestIdleCallback
+  ? (callback) => window.requestIdleCallback(callback, { timeout: 900 })
+  : (callback) => setTimeout(callback, 120);
+scheduleStudio(initializeStudio);

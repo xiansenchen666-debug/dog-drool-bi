@@ -35,7 +35,7 @@ export const products = [
     price: 49,
     subtitle: "甜甜的蝴蝶结造型",
     color: "#f3e9d5",
-    asset: "/assets/cream-pink-bow.png",
+    asset: "/assets/cream-pink-bow.webp",
     shape: "bib",
     detail: "奶油色围兜、粉色蝴蝶结，粉绿条纹底和手工花朵贴布",
   },

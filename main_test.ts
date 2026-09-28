@@ -10,7 +10,7 @@ Deno.test("serves the catalog and the local 3D library", async () => {
   assert(catalog.status === 200 && products.length === 5, "catalog should have five products");
   assert(products.some((product: { id: string; asset: string; shape: string }) =>
     product.id === "cream-pink-bow" &&
-    product.asset === "/assets/cream-pink-bow.png" &&
+    product.asset === "/assets/cream-pink-bow.webp" &&
     product.shape === "bib"
   ), "new bandana should be in the catalog");
   const library = await handler(new Request("http://localhost/vendor/three.module.js"));
