@@ -55,6 +55,13 @@ function imageDataUrl(base64: string, mimeType = "image/png"): string {
   return `data:${mimeType};base64,${base64}`;
 }
 
+function normalizeImageValue(value: string): string {
+  if (value.startsWith("data:") || value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+  return imageDataUrl(value);
+}
+
 async function readImageResult(response: Response): Promise<string | null> {
   const body = await response.json().catch(() => null) as
     | { data?: Array<{ b64_json?: string; url?: string }> }
@@ -63,8 +70,27 @@ async function readImageResult(response: Response): Promise<string | null> {
   const first = body && "data" in body ? body.data?.[0] : undefined;
   if (first?.b64_json) return imageDataUrl(first.b64_json);
   if (first?.url) return first.url;
-  if (body && "image" in body && typeof body.image === "string") return body.image;
+  if (body && "image" in body && typeof body.image === "string") {
+    return normalizeImageValue(body.image);
+  }
   return null;
+}
+
+async function readUpstreamError(response: Response): Promise<string> {
+  const text = await response.text().catch(() => "");
+  try {
+    const body = JSON.parse(text) as {
+      error?: { message?: string } | string;
+      message?: string;
+    };
+    const detail = typeof body.error === "string"
+      ? body.error
+      : body.error?.message || body.message;
+    if (detail) return detail.slice(0, 280);
+  } catch {
+    // Keep a short plain-text response when the gateway does not return JSON.
+  }
+  return text.replace(/\s+/g, " ").slice(0, 280);
 }
 
 async function generateTryOn(request: Request): Promise<Response> {
@@ -136,12 +162,12 @@ async function generateTryOn(request: Request): Promise<Response> {
   }
 
   if (!upstream.ok) {
-    const detail = await upstream.text().catch(() => "");
-    console.error("image edit upstream error", upstream.status, detail.slice(0, 500));
+    const detail = await readUpstreamError(upstream);
+    console.error("image edit upstream error", upstream.status, detail);
     return jsonError(
       upstream.status === 429
         ? "生成服务当前较忙，请稍后重试。"
-        : "图像生成失败，请检查图片后重试。",
+        : `图像服务返回 ${upstream.status}${detail ? `：${detail}` : "，请检查配置后重试。"}`,
       upstream.status >= 500 ? 502 : 400,
     );
   }
