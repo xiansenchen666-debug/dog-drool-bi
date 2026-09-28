@@ -113,7 +113,7 @@ async function generateTryOn(request: Request): Promise<Response> {
       ? prompt.trim()
       : "把参考图片中的宠物自然地戴上参考图片中的口水巾。保持宠物的品种、脸部、毛发、姿势、背景和照片构图不变，只在脖颈位置添加口水巾，并让布料贴合毛发和身体，生成真实自然的商品试戴效果图。",
   );
-  upstreamForm.append("response_format", "b64_json");
+  upstreamForm.append("quality", Deno.env.get("IMAGE_QUALITY") || "low");
   upstreamForm.append("size", "1024x1024");
 
   const controller = new AbortController();

@@ -14,7 +14,7 @@ deno task dev
 
 ## GitHub 与 Deno Deploy
 
-仓库中的 `auto_push.bat` 会提交并推送到 GitHub。Deno Deploy 中将此仓库创建为 **Dynamic App**，入口文件为 `main.ts`。在项目的 Environment Variables / Secrets 中设置 `IMAGE_API_KEY`，可选设置 `IMAGE_API_BASE_URL`（默认 `https://meapi.space/v1`）和 `IMAGE_MODEL`（默认 `gpt-image-2.5-flare`）。GitHub 集成关联 `main` 分支后，后续推送会触发自动部署。
+仓库中的 `auto_push.bat` 会提交并推送到 GitHub。Deno Deploy 中将此仓库创建为 **Dynamic App**，入口文件为 `main.ts`。在项目的 Environment Variables / Secrets 中设置 `IMAGE_API_KEY`，可选设置 `IMAGE_API_BASE_URL`（默认 `https://meapi.space/v1`）、`IMAGE_MODEL`（默认 `gpt-image-2.5-flare`）和 `IMAGE_QUALITY`（默认 `low`）。GitHub 集成关联 `main` 分支后，后续推送会触发自动部署。
 
 ## 换成真实商品
 
