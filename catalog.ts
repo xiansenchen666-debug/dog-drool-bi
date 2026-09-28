@@ -27,6 +27,15 @@ export const products = [
     detail: "暖黄色面料、白色雏菊印花，奶白色包边",
   },
   {
+    id: "cream-pink-bow",
+    name: "奶油粉蝶结",
+    price: 49,
+    subtitle: "甜甜的蝴蝶结造型",
+    color: "#f3e9d5",
+    asset: "/assets/cream-pink-bow.png",
+    detail: "奶油色围兜、粉色蝴蝶结，粉绿条纹底和手工花朵贴布",
+  },
+  {
     id: "forest",
     name: "森林散步",
     price: 42,

@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f8f8f4">
-  <meta name="description" content="上传爱犬照片，选择口水巾款式，即时生成 3D 渲染佩戴效果图。">
-  <title>尾巴日记 · 狗狗口水巾试戴</title>
-  <link rel="stylesheet" href="/style.css?v=3d1">
-  <script src="/app.js?v=3d1" type="module"></script>
+<meta name="description" content="上传宠物照片，用免费开源工具抠出宠物后选择口水巾款式，快速生成试戴效果图。">
+  <title>尾巴日记 · 宠物口水巾试戴</title>
+  <link rel="stylesheet" href="/style.css?v=local-cutout2">
+  <script src="/app.js?v=local-cutout2" type="module"></script>
 </head>
 <body>
   <header class="site-header">
@@ -26,7 +26,7 @@
       <div>
         <span class="eyebrow"><span aria-hidden="true">✳</span> FOR YOUR BEST FRIEND</span>
         <h1 id="page-title">今天的可爱，<br><em>戴在脖子上。</em></h1>
-        <p>上传狗狗照片，挑一条心动的口水巾，立刻看看它穿上的样子。</p>
+        <p>上传宠物照片，挑一条心动的口水巾，立刻看看它戴上的样子。</p>
       </div>
       <span class="intro-doodle" aria-hidden="true">好看，也要好玩 ✳</span>
     </section>
@@ -34,31 +34,37 @@
     <section class="studio wrap" id="studio" aria-labelledby="studio-title">
       <div class="preview-area">
         <div class="section-heading">
-          <div><span class="kicker">THE FITTING ROOM</span><h2 id="studio-title">狗狗试衣间 <span aria-hidden="true">✳</span></h2></div>
+          <div><span class="kicker">THE FITTING ROOM</span><h2 id="studio-title">宠物试衣间 <span aria-hidden="true">✳</span></h2></div>
           <span class="preview-label" id="preview-label">示例照片</span>
         </div>
         <div class="preview" id="preview">
-          <img id="preview-image" src="/assets/sample-dog.jpg" alt="示例金毛犬照片">
+          <img id="preview-image" src="/assets/sample-dog.jpg" alt="示例宠物照片">
+          <img id="pet-cutout" alt="" hidden>
           <canvas id="render-canvas" aria-label="3D 口水巾渲染"></canvas>
-          <div class="image-badge"><span aria-hidden="true">✳</span> 实时 3D 试戴</div>
+          <div class="image-badge"><span aria-hidden="true">✳</span> 宠物试戴预览</div>
+          <div class="loading-layer" id="processing" hidden>
+            <div class="loading-spinner" aria-hidden="true"></div>
+            <strong>正在用本地工具抠出宠物</strong>
+            <p>首次使用需要加载开源组件，请稍等片刻</p>
+          </div>
         </div>
-        <div class="preview-foot"><span id="preview-caption">示例试戴 · 换上你家狗狗的照片</span><button id="calibrate-button" type="button" title="点选照片中狗狗的脖颈，不用拖动">定位脖颈 ↗</button></div>
+        <div class="preview-foot"><span id="preview-caption">示例试戴 · 换上你家宠物的照片</span><button id="calibrate-button" type="button" title="点选照片中宠物的脖颈，不用拖动">定位脖颈 ↗</button></div>
       </div>
 
       <div class="controls">
         <span class="kicker">MAKE IT YOURS</span>
         <h2>一起挑一挑<span class="dot">.</span></h2>
-        <p class="controls-intro">上传照片、挑好款式，3D 佩戴效果会立即呈现。</p>
+        <p class="controls-intro">上传照片、挑好款式，佩戴效果会立即呈现。</p>
 
         <div class="control-group">
-          <div class="step-title"><span>01</span><h3>上传狗狗照片</h3></div>
+          <div class="step-title"><span>01</span><h3>上传宠物照片</h3></div>
           <label class="upload-button" for="photo-input">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
             <span id="upload-label">选择一张照片</span>
             <span class="action-arrow" aria-hidden="true">↗</span>
           </label>
           <input id="photo-input" type="file" accept="image/jpeg,image/png,image/webp">
-          <p class="helper">建议正面拍摄、脖颈居中 · JPG / PNG / WebP，10 MB 内</p>
+          <p class="helper">建议宠物完整入镜、脖颈清晰 · JPG / PNG / WebP，10 MB 内</p>
         </div>
 
         <div class="control-group">
@@ -68,22 +74,22 @@
         </div>
 
         <div class="control-group result-group">
-          <div class="step-title"><span>03</span><h3>调整佩戴</h3></div>
+          <div class="step-title"><span>03</span><h3>调整位置和大小</h3></div>
           <div class="view-options" id="view-options" role="group" aria-label="口水巾视角">
             <button type="button" data-view="left">左侧</button>
             <button type="button" data-view="front" aria-pressed="true">正面</button>
             <button type="button" data-view="right">右侧</button>
           </div>
           <div class="size-field"><label for="size-range">口水巾大小 <output id="size-value" for="size-range">100%</output></label><input id="size-range" type="range" min="60" max="150" step="5" value="100"></div>
-          <p class="helper disclosure">纯代码实时渲染，照片只保留在你的浏览器，不上传服务器。</p>
+          <p class="helper disclosure">免费开源抠图在浏览器中完成，照片不会上传到你的服务器。</p>
           <button id="generate-button" class="primary-button" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
-            <span id="generate-label">保存示例 3D 图</span>
+            <span id="generate-label">保存示例试戴图</span>
             <span class="action-arrow" aria-hidden="true">↗</span>
           </button>
           <p class="error-message" id="error-message" role="alert" hidden></p>
         </div>
-        <p class="controls-note">正面、脖颈清晰的照片效果最佳。模拟位置和尺寸因体型而异。</p>
+        <p class="controls-note">宠物完整入镜、脖颈清晰的照片效果最佳。请用定位按钮和滑杆微调位置与大小。</p>
       </div>
     </section>
 
@@ -98,9 +104,9 @@
     <section class="about wrap" id="about">
       <span class="about-star" aria-hidden="true">✳</span>
       <div><span class="kicker">A LITTLE NOTE</span><h2>把它的可爱，<br>提前看见。</h2></div>
-      <p>上传一张正面的狗狗照片，选好喜欢的款式，就能看到有布料弯曲与光影的 3D 模拟佩戴图。渲染在你的设备上即时完成，无需等待远程生图。</p>
+      <p>上传宠物照片后，浏览器会先识别并抠出宠物，再叠加口水巾的布料和光影效果。你只需要点击定位脖颈、调整大小，就能快速看到试戴效果。</p>
     </section>
   </main>
-  <footer><div class="wrap footer-inner"><span class="footer-brand">尾巴日记 <small>TAIL TALES</small></span><span>给每一只独一无二的小狗。</span><a href="#top">回到顶部 ↑</a></div></footer>
+  <footer><div class="wrap footer-inner"><span class="footer-brand">尾巴日记 <small>TAIL TALES</small></span><span>给每一只独一无二的宠物。</span><a href="#top">回到顶部 ↑</a></div></footer>
 </body>
 </html>

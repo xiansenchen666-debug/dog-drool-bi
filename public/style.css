@@ -37,7 +37,8 @@ nav a:hover, footer a:hover { color: #d5654f; }
 .preview-label { color: #6b856e; font-size: 11px; white-space: nowrap; }
 .preview { position: relative; width: 100%; aspect-ratio: 1.4; overflow: hidden; border-radius: 4px; background: #d6d3c9; }
 .preview > img { width: 100%; height: 100%; object-fit: cover; }
-.preview > canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.preview > img#pet-cutout { position: absolute; inset: 0; z-index: 1; }
+.preview > canvas { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; }
 .preview.calibrating { cursor: crosshair; }
 .preview.calibrating::after { content: ""; position: absolute; inset: 0; border: 3px solid #e9785a; pointer-events: none; }
 .image-badge { position: absolute; top: 16px; left: 16px; display: flex; align-items: center; gap: 6px; padding: 8px 11px; border-radius: 2px; background: #faf9f2ed; font-size: 11px; font-weight: 700; }

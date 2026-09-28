@@ -102,7 +102,9 @@ export function createTryOnRenderer(stage, canvas, photo) {
   group.add(cloth);
 
   const loader = new THREE.TextureLoader();
+  const petCutout = stage.querySelector("#pet-cutout");
   let selectedId = null;
+  let petCutoutUrl = null;
   let targetAngle = 0;
   let animation = 0;
   let stageWidth = 1;
@@ -154,6 +156,20 @@ export function createTryOnRenderer(stage, canvas, photo) {
     });
   }
 
+  function setPetCutout(url) {
+    if (petCutoutUrl?.startsWith("blob:") && petCutoutUrl !== url) {
+      URL.revokeObjectURL(petCutoutUrl);
+    }
+    petCutoutUrl = url;
+    if (!petCutout) return;
+    petCutout.src = url || "";
+    petCutout.hidden = !url;
+  }
+
+  function clearPetCutout() {
+    setPetCutout("");
+  }
+
   function setView(view) {
     targetAngle = { left: -.65, front: 0, right: .65 }[view] ?? 0;
     cancelAnimationFrame(animation);
@@ -182,6 +198,7 @@ export function createTryOnRenderer(stage, canvas, photo) {
 
   async function exportPng() {
     await photo.decode();
+    if (petCutoutUrl) await petCutout.decode();
     const width = 1600;
     const height = Math.round(width * stageHeight / stageWidth);
     const result = document.createElement("canvas");
@@ -195,6 +212,7 @@ export function createTryOnRenderer(stage, canvas, photo) {
     render();
     try {
       drawCover(ctx, photo, width, height);
+      if (petCutoutUrl) drawCover(ctx, petCutout, width, height);
       ctx.drawImage(canvas, 0, 0, width, height);
       return await new Promise((resolve, reject) => {
         result.toBlob((blob) => blob ? resolve(blob) : reject(new Error("无法保存图片。")), "image/png");
@@ -207,5 +225,13 @@ export function createTryOnRenderer(stage, canvas, photo) {
   const observer = new ResizeObserver(resize);
   observer.observe(stage);
   resize();
-  return { setStyle, setView, setPlacement, setSize, exportPng };
+  return {
+    setStyle,
+    setView,
+    setPlacement,
+    setSize,
+    setPetCutout,
+    clearPetCutout,
+    exportPng,
+  };
 }

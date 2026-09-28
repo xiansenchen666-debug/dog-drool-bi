@@ -17,6 +17,7 @@ const elements = {
   size: document.querySelector("#size-range"),
   sizeValue: document.querySelector("#size-value"),
   error: document.querySelector("#error-message"),
+  processing: document.querySelector("#processing"),
 };
 
 let products = [];
@@ -24,6 +25,23 @@ let selected = null;
 let photoUrl = null;
 let scene3d = null;
 let calibrating = false;
+let uploadRequest = 0;
+
+const BACKGROUND_REMOVAL_MODULE =
+  "https://esm.sh/@imgly/background-removal@1.5.8?bundle";
+
+function setProcessing(active, message = "正在用本地工具抠出宠物") {
+  elements.processing.hidden = !active;
+  elements.processing.querySelector("strong").textContent = message;
+  elements.input.disabled = active;
+}
+
+async function removePetBackgroundLocally(file) {
+  const { removeBackground } = await import(BACKGROUND_REMOVAL_MODULE);
+  return removeBackground(file, {
+    output: { format: "image/png" },
+  });
+}
 
 function showError(message) {
   elements.error.textContent = message;
@@ -73,7 +91,7 @@ function renderProducts() {
   setSelected(products[0]);
 }
 
-elements.input.addEventListener("change", () => {
+elements.input.addEventListener("change", async () => {
   const file = elements.input.files?.[0];
   if (!file) return;
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 10 * 1024 * 1024) {
@@ -85,22 +103,41 @@ elements.input.addEventListener("change", () => {
   if (photoUrl) URL.revokeObjectURL(photoUrl);
   photoUrl = URL.createObjectURL(file);
   elements.preview.src = photoUrl;
-  elements.preview.alt = "上传的狗狗照片与 3D 口水巾试戴效果";
-  elements.previewLabel.textContent = "你的狗狗";
-  elements.previewCaption.textContent = `${selected.name} · 实时 3D 试戴`;
+  elements.preview.alt = "上传的宠物照片与口水巾试戴效果";
+  elements.previewLabel.textContent = "你的宠物";
+  elements.previewCaption.textContent = `${selected.name} · 正在准备本地抠图`;
   scene3d?.setPlacement(.5, .7);
+  scene3d?.clearPetCutout();
   calibrating = false;
   elements.stage.classList.remove("calibrating");
   elements.calibrate.textContent = "定位脖颈 ↗";
   elements.uploadLabel.textContent = file.name.length > 24 ? `${file.name.slice(0, 21)}…` : file.name;
   elements.generate.disabled = !scene3d;
-  elements.generateLabel.textContent = "生成并保存 3D 效果图";
+  elements.generateLabel.textContent = "保存宠物试戴图";
+
+  const requestId = ++uploadRequest;
+  setProcessing(true);
+  showError("");
+  try {
+    const cutout = await removePetBackgroundLocally(file);
+    if (requestId !== uploadRequest) return;
+    const cutoutUrl = URL.createObjectURL(cutout);
+    scene3d?.setPetCutout(cutoutUrl);
+    elements.previewCaption.textContent = `${selected.name} · 已抠出宠物，可定位口水巾`;
+  } catch (error) {
+    if (requestId !== uploadRequest) return;
+    scene3d?.clearPetCutout();
+    elements.previewCaption.textContent = `${selected.name} · 可定位口水巾`;
+    showError("本地抠图暂时失败，已保留原图试戴效果，请重试。");
+  } finally {
+    if (requestId === uploadRequest) setProcessing(false);
+  }
 });
 
 elements.calibrate.addEventListener("click", () => {
   calibrating = !calibrating;
   elements.stage.classList.toggle("calibrating", calibrating);
-  elements.calibrate.textContent = calibrating ? "点一下狗狗的脖颈" : "定位脖颈 ↗";
+  elements.calibrate.textContent = calibrating ? "点一下宠物的脖颈" : "定位脖颈 ↗";
 });
 
 elements.stage.addEventListener("click", (event) => {
@@ -135,7 +172,7 @@ elements.generate.addEventListener("click", async () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `尾巴日记-${selected.name}-3D试戴.png`;
+    link.download = `尾巴日记-${selected.name}-宠物试戴.png`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch (error) {
